@@ -40,21 +40,26 @@ public class OrderService {
                         .build())
                 .collect(Collectors.toList());
         itemRepo.saveAll(items);
-        return order;
+
+        BigDecimal total = items.stream()
+                .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        order.setTotal(total);
+        return orderRepo.save(order);
     }
 
-public List<Order> getOrdersByUser(Long userId) {
-    return orderRepo.getOrderSummary(userId).stream()
-            .map(map -> Order.builder()
-                    .id(map.get("id") != null ? ((Number) map.get("id")).longValue() : null)
-                    .userId(map.get("userId") != null ? ((Number) map.get("userId")).longValue() : null)
-                    .shippingAddress((String) map.get("shippingAddress"))
-                    .status((String) map.get("status"))
-                    .createdAt((LocalDateTime) map.get("createdAt"))
-                    .total((BigDecimal) map.get("total"))
-                    .build())
-            .collect(Collectors.toList());
-}
+    public List<Order> getOrdersByUser(Long userId) {
+        return orderRepo.getOrderSummary(userId).stream()
+                .map(map -> Order.builder()
+                        .id(map.get("id") != null ? ((Number) map.get("id")).longValue() : null)
+                        .userId(map.get("userId") != null ? ((Number) map.get("userId")).longValue() : null)
+                        .shippingAddress((String) map.get("shippingAddress"))
+                        .status((String) map.get("status"))
+                        .createdAt((LocalDateTime) map.get("createdAt"))
+                        .total((BigDecimal) map.get("total"))
+                        .build())
+                .collect(Collectors.toList());
+    }
 
     public Optional<Order> getOrderById(Long orderId) {
         return orderRepo.findById(orderId);
