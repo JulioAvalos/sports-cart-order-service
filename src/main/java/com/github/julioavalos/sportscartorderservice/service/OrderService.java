@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import jakarta.transaction.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -42,9 +43,18 @@ public class OrderService {
         return order;
     }
 
-    public List<Order> getOrdersByUser(Long userId) {
-        return orderRepo.findByUserId(userId);
-    }
+public List<Order> getOrdersByUser(Long userId) {
+    return orderRepo.getOrderSummary(userId).stream()
+            .map(map -> Order.builder()
+                    .id(map.get("id") != null ? ((Number) map.get("id")).longValue() : null)
+                    .userId(map.get("userId") != null ? ((Number) map.get("userId")).longValue() : null)
+                    .shippingAddress((String) map.get("shippingAddress"))
+                    .status((String) map.get("status"))
+                    .createdAt((LocalDateTime) map.get("createdAt"))
+                    .total((BigDecimal) map.get("total"))
+                    .build())
+            .collect(Collectors.toList());
+}
 
     public Optional<Order> getOrderById(Long orderId) {
         return orderRepo.findById(orderId);
